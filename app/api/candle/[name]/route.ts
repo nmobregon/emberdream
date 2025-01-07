@@ -1,9 +1,8 @@
-import { NextApiRequest } from "next";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "redis";
 
 export const GET = async (
-  req: NextApiRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) => {
   const { name } = await params;
