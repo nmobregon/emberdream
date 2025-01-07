@@ -50,7 +50,7 @@ export function CandleItem(candleProp: {
     <>
       {candleObj && (
         <div
-          className={`flex flex-col w-[300px] h-[300px] ${candleProp.navigate && "cursor-pointer"}`}
+          className={`flex flex-col justify-end w-[300px] h-[300px] ${candleProp.navigate && "cursor-pointer"}`}
           onClick={() =>
             candleProp.navigate &&
             window.open(window.location.href + "candle/" + candleProp.name)
