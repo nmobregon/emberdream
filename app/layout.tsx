@@ -32,9 +32,13 @@ export default function RootLayout({
           <Link href="/">
             <h1 className="text-4xl font-bold">Ember Dream</h1>
           </Link>
-          <button className="text-sm rounded-md text-black bg-gray-300 px-4 py-2">
+          <Link
+            target="_blank"
+            href="https://cafecito.app/emberdream"
+            className="text-sm rounded-md text-black bg-gray-300 px-4 py-2"
+          >
             Buy me a coffee / Invítame un cafecito
-          </button>
+          </Link>
         </div>
         <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
           {children}
