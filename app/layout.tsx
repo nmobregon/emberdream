@@ -18,8 +18,6 @@ export const metadata: Metadata = {
   description: "A place for your wishes to burn",
 };
 
-export const icon = "/favicon.png";
-
 export default function RootLayout({
   children,
 }: Readonly<{
