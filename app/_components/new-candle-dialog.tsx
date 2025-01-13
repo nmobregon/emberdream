@@ -6,12 +6,18 @@ import { countries } from "../_data/countries";
 
 export const NewCandleDialog = ({
   candleCreated,
+  childRendered,
 }: {
   candleCreated: VoidFunction;
+  childRendered: VoidFunction;
 }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dialog = useRef<any>(undefined);
   const [dialogOpened, setDialogOpened] = useState(false);
+
+  useLayoutEffect(() => {
+    childRendered();
+  }, [childRendered]);
 
   useLayoutEffect(() => {
     if (dialogOpened) {
@@ -64,6 +70,8 @@ export const NewCandleDialog = ({
             text-black w-20 h-20 flex items-center justify-center
             hover:shadow-xl hover:bg-gray-300 `}
         title="New Candle"
+        id="new_candle_btn"
+        tabIndex={0}
         onClick={openDialog}
       >
         <Image
@@ -99,7 +107,12 @@ export const NewCandleDialog = ({
             >
               Country / País
             </label>
-            <select name="country" id="country" className="w-3/5 h-[33px]">
+            <select
+              name="country"
+              id="country"
+              className="w-3/5 h-[33px]"
+              tabIndex={1}
+            >
               <option>Select country / Selecciona país</option>
               {countries.map((country) => (
                 <option value={country.code} key={country.code}>
@@ -117,6 +130,7 @@ export const NewCandleDialog = ({
               type="text"
               name="name"
               id="name"
+              tabIndex={2}
             />
           </div>
           <div className="flex odd:bg-gray-100 px-2 py-4 place-items-center gap-2">
@@ -128,11 +142,13 @@ export const NewCandleDialog = ({
               type="text"
               name="wish"
               id="wish"
+              tabIndex={3}
             />
           </div>
           <button
             className="border border-gray-500 rounded-2xl px-4 py-2 w-3/4 self-center mt-2"
             type="submit"
+            tabIndex={4}
           >
             Light / Encender
           </button>

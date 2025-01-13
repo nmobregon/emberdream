@@ -19,7 +19,7 @@ export default function CandlePage({
   }, [nameParam.name]);
 
   return (
-    <div className="flex place-content-center h-full w-full mt-10">
+    <div className="flex place-content-center h-full w-full mt-[50vh]">
       {candle && (
         <CandleItem name={nameParam.name} candle={candle} navigate={false} />
       )}
