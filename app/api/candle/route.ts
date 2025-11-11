@@ -42,6 +42,7 @@ export const POST = async (req: NextRequest) => {
         JSON.stringify({
           wish: body.wish,
           country: body.country,
+          color: body.color || "#ff9224", // Default to original orange color
         })
       );
       const duration = +(process.env.CANDLE_DURATION_MINUTES ?? 720);

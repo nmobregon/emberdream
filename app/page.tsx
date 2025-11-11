@@ -1,62 +1,30 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CandleItem } from "./_components/candle-item";
+import { CandlePlaceholder } from "./_components/candle-placeholder";
 import { NewCandleDialog } from "./_components/new-candle-dialog";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import { useLanguage } from "./_contexts/language-context";
 
 const getCandles = async () => {
   const res = await fetch("api/candle");
   return res.json();
 };
 
-const driverObj = driver({
-  animate: true,
-  showProgress: true,
-  allowClose: true,
-  allowKeyboardControl: true,
-  showButtons: ["next", "previous", "close"],
-  steps: [
-    {
-      popover: {
-        title: "Welcome / Bienvenid@",
-        description: `ENG: Ember Dream lets you express you wishes and intentions with a 12-hour-lasting flame <br/><br/>
-          ESP: Ember Dream te permite expresar tus deseos e intenciones prendiendo una llama que dura <strong>12 horas</strong>.`,
-      },
-    },
-    {
-      element: "#new_candle_btn",
-      popover: {
-        title: "Spark the fire! / Enciende el fuego!",
-        description:
-          "ENG: Click here to light your candle and input your country, name and wish <br/><br/>ESP: Haciendo click aqui puedes encender tu vela ingresando tu país, nombre y deseo o intención.",
-        side: "left",
-        align: "start",
-      },
-    },
-    {
-      element: "#donate_btn",
-      popover: {
-        title: "Donate / Donar",
-        description: `ENG: This site is non-profit but still requires effort and time. If you consider it's worth a dollar, the team will gratefully accept your donation. <br/><br/>
-          ESP: Este sitio no tiene fines de lucro, pero si implica esfuerzo y tiempo. Si consideras que vale la pena, el equipo agradece tu donación.`,
-        side: "right",
-        align: "start",
-      },
-    },
-    {
-      popover: {
-        title:
-          "May all your wished come true / Que todos tus sueños se cumplan",
-        description:
-          "ENG: The Ember Dream team wishes you the best. <br/><br/>ESP: El equipo de Ember Dream te sea lo mejor!",
-      },
-    },
-  ],
-});
-
 export default function Home() {
   const [candles, setCandles] = useState([]);
+  const [windowWidth, setWindowWidth] = useState(0);
+  const openDialogRef = useRef<(() => void) | null>(null);
+  const { t } = useLanguage();
+
+  // Detect window width for responsive placeholder count
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    handleResize(); // Initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -72,8 +40,64 @@ export default function Home() {
 
   const onChildRendered = () => {
     if (localStorage.getItem("visited")) return;
+    
+    const driverObj = driver({
+      animate: true,
+      showProgress: true,
+      allowClose: true,
+      allowKeyboardControl: true,
+      showButtons: ["next", "previous", "close"],
+      steps: [
+        {
+          popover: {
+            title: t("tour.welcome.title"),
+            description: t("tour.welcome.description"),
+          },
+        },
+        {
+          element: "#new_candle_btn",
+          popover: {
+            title: t("tour.spark.title"),
+            description: t("tour.spark.description"),
+            side: "left",
+            align: "start",
+          },
+        },
+        {
+          element: "#donate_btn",
+          popover: {
+            title: t("tour.donate.title"),
+            description: t("tour.donate.description"),
+            side: "right",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: t("tour.farewell.title"),
+            description: t("tour.farewell.description"),
+          },
+        },
+      ],
+    });
+    
     driverObj.drive();
     localStorage.setItem("visited", "true");
+  };
+
+  // Calculate how many placeholders to show
+  const candleCount = Object.keys(candles).length;
+  const minCandles = windowWidth < 640 ? 4 : 8; // Mobile: 4, Desktop: 8
+  const placeholderCount = Math.max(0, minCandles - candleCount);
+
+  const handlePlaceholderClick = () => {
+    if (openDialogRef.current) {
+      openDialogRef.current();
+    }
+  };
+
+  const handleDialogMount = (openFn: () => void) => {
+    openDialogRef.current = openFn;
   };
 
   return (
@@ -81,16 +105,48 @@ export default function Home() {
       <NewCandleDialog
         candleCreated={onCandleCreated}
         childRendered={onChildRendered}
+        onMount={handleDialogMount}
       />
-      <div className="flex flex-col md:flex-row gap-4 w-full flex-wrap self-start mt-10">
-        {Object.keys(candles).map((candleKey) => (
-          <CandleItem
-            candle={candles[candleKey as unknown as number]}
-            key={candleKey}
-            name={candleKey}
-            navigate
-          />
-        ))}
+      <div className="w-full py-8">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-glow">
+            🌟 {t("home.hero.title")}
+          </h2>
+          <p className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto">
+            {t("home.hero.subtitle")}
+          </p>
+        </div>
+        
+        {candleCount === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-gray-400 mb-4">
+              {t("home.empty.title")}
+            </p>
+            <p className="text-gray-500">
+              {t("home.empty.subtitle")}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 justify-items-center w-full">
+            {/* Real candles */}
+            {Object.keys(candles).map((candleKey) => (
+              <CandleItem
+                candle={candles[candleKey as unknown as number]}
+                key={candleKey}
+                name={candleKey}
+                navigate
+              />
+            ))}
+            
+            {/* Placeholders */}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <CandlePlaceholder 
+                key={`placeholder-${index}`} 
+                onClick={handlePlaceholderClick}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );

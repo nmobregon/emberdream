@@ -5,33 +5,70 @@
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --accent-warm: #ff9b4d;
+  --accent-glow: #ffb366;
 }
 
 body {
   color: var(--foreground);
-  background-image: linear-gradient(
-    to right top,
-    #ff6032,
-    #e67e00,
-    #c19900,
-    #90ae00,
-    #45be18
-  );
+  background: #0f0f1e;
+  background-image: 
+    radial-gradient(ellipse at top, rgba(75, 46, 131, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(255, 106, 0, 0.15) 0%, transparent 50%),
+    linear-gradient(
+      135deg,
+      #1a0b2e 0%,
+      #2d1b4e 25%,
+      #1f1535 50%,
+      #2a1a45 75%,
+      #0f0f1e 100%
+    );
+  background-size: 100% 100%, 100% 100%, 400% 400%;
+  background-attachment: fixed;
+  animation: gradient 20s ease infinite;
+  min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
-  height: 100vh;
+}
+
+/* Mystical floating particles effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20% 30%, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(2px 2px at 60% 70%, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 80% 10%, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(2px 2px at 90% 60%, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 33% 80%, rgba(255, 215, 0, 0.3), transparent);
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  pointer-events: none;
+  opacity: 0.4;
+  animation: sparkle 30s linear infinite;
 }
 
 @keyframes gradient {
-  0% {
-    background-position: 0% 50%;
+  0%, 100% {
+    background-position: 0% 0%, 0% 0%, 0% 50%;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 0% 0%, 0% 0%, 100% 50%;
   }
-  100% {
-    background-position: 0% 50%;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 50% 50%, 100% 0%, 0% 100%, 50% 0%;
+    opacity: 0.3;
+  }
+  50% {
+    background-position: 100% 100%, 0% 0%, 0% 50%, 0% 100%, 100% 0%, 0% 50%;
+    opacity: 0.5;
   }
 }
 
@@ -227,4 +264,156 @@ body {
   50% {
     opacity: 0.95;
   }
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .glass {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glass-light {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glow-warm {
+    box-shadow: 
+      0 0 20px rgba(255, 155, 77, 0.3),
+      0 0 40px rgba(255, 155, 77, 0.2),
+      0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .glow-warm-hover:hover {
+    box-shadow: 
+      0 0 30px rgba(255, 155, 77, 0.5),
+      0 0 60px rgba(255, 155, 77, 0.3),
+      0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-glow {
+    text-shadow: 
+      0 0 10px rgba(255, 215, 0, 0.5),
+      0 0 20px rgba(255, 155, 77, 0.3);
+  }
+}
+
+/* Pulse animation for FAB */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(255, 155, 77, 0.6),
+      0 0 40px rgba(255, 155, 77, 0.4),
+      0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(255, 155, 77, 0.8),
+      0 0 60px rgba(255, 155, 77, 0.5),
+      0 4px 25px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Dialog backdrop */
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Dialog appearance animation */
+@keyframes dialog-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-dialog-appear {
+  animation: dialog-appear 0.3s ease-out;
+}
+
+/* Candle flicker animation */
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.95;
+    filter: brightness(1.1);
+  }
+  75% {
+    opacity: 0.97;
+    filter: brightness(0.95);
+  }
+}
+
+.animate-flicker {
+  animation: flicker 3s ease-in-out infinite;
+}
+
+/* Dropdown appearance animation */
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown-appear {
+  animation: dropdown-appear 0.2s ease-out;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.4);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.6);
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.4) rgba(0, 0, 0, 0.3);
 }
