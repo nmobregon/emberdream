@@ -83,33 +83,66 @@ export const NewCandleDialog = ({
       };
     };
 
-    await fetch("api/candle", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: name.value,
-        wish: wish.value,
-        country: selectedCountry,
-        color: selectedColor,
-      }),
-    });
-    candleCreated();
-    setDialogOpened(false);
-    setSelectedCountry("");
-    setSelectedColor("#ff9224"); // Reset to default
-    setCountryAutoDetected(false); // Allow auto-detection on next open
+    try {
+      const response = await fetch("api/candle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.value,
+          wish: wish.value,
+          country: selectedCountry,
+          color: selectedColor,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle rate limiting
+        if (response.status === 429) {
+          const retryAfter = data.retryAfter || 60;
+          alert(
+            `${data.error || "Too many requests"} Please try again in ${retryAfter} seconds.`
+          );
+          return;
+        }
+        
+        // Handle validation errors
+        if (response.status === 400) {
+          const errorMsg = data.details 
+            ? `${data.error}\n${data.details.join("\n")}`
+            : data.error || "Validation failed";
+          alert(errorMsg);
+          return;
+        }
+        
+        // Other errors
+        alert(data.error || "Failed to create candle. Please try again.");
+        return;
+      }
+
+      // Success
+      candleCreated();
+      setDialogOpened(false);
+      setSelectedCountry("");
+      setSelectedColor("#ff9224"); // Reset to default
+      setCountryAutoDetected(false); // Allow auto-detection on next open
+    } catch (error) {
+      console.error("Error creating candle:", error);
+      alert("Failed to create candle. Please check your connection and try again.");
+    }
   };
 
   return (
     <>
       <button
         className={`
-            fixed bottom-10 right-10 z-50
+            fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50
             rounded-full text-2xl font-bold 
             bg-gradient-to-br from-amber-600 to-orange-700
-            text-white w-20 h-20 
+            text-white w-14 h-14 md:w-20 md:h-20 
             flex items-center justify-center
             transition-all duration-300 ease-out
             hover:scale-110 hover:from-amber-500 hover:to-orange-600
@@ -126,7 +159,7 @@ export const NewCandleDialog = ({
           alt="Candelei logo"
           width={50}
           height={50}
-          className="drop-shadow-lg"
+          className="w-8 h-8 md:w-[50px] md:h-[50px] drop-shadow-lg"
         />
       </button>
       <dialog

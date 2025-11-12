@@ -28,7 +28,7 @@ export function LayoutContent({
             <LanguageSelector />
             <Link
               target="_blank"
-              href="https://cafecito.app/candelei"
+              href="https://cafecito.app/candeleiapp"
               className="text-xs md:text-base rounded-full px-3 py-1.5 md:px-5 md:py-2.5 font-medium
                 bg-gradient-to-r from-amber-600 to-orange-600 
                 text-white shadow-lg

@@ -25,12 +25,16 @@ export const translations = {
     "home.hero.subtitle": "Each flame burns for 12 hours, carrying intentions and dreams from around the world",
     "home.empty.title": "No candles lit yet... be the first!",
     "home.empty.subtitle": "Click the button below to light your candle",
+    "loading": "Loading more candles...",
     
     // Candle card
     "candle.by": "by",
     "candle.on": "on",
     "candle.copy": "Copy Link",
     "candle.share": "Share",
+    "candle.support": "Support this wish",
+    "candle.support.count": "supporters",
+    "candle.support.already": "Already supported",
     "candle.placeholder": "Waiting for your wish",
     
     // Dialog
@@ -77,12 +81,16 @@ export const translations = {
     "home.hero.subtitle": "Cada llama arde por 12 horas, llevando intenciones y sueños de todo el mundo",
     "home.empty.title": "No hay velas encendidas aún... ¡sé el primero!",
     "home.empty.subtitle": "Haz clic en el botón de abajo para encender tu vela",
+    "loading": "Cargando más velas...",
     
     // Candle card
     "candle.by": "por",
     "candle.on": "el",
     "candle.copy": "Copiar enlace",
     "candle.share": "Compartir",
+    "candle.support": "Apoyar este deseo",
+    "candle.support.count": "apoyos",
+    "candle.support.already": "Ya apoyado",
     "candle.placeholder": "Esperando tu deseo",
     
     // Dialog

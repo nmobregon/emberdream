@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { CandleItem } from "./_components/candle-item";
 import { CandlePlaceholder } from "./_components/candle-placeholder";
 import { NewCandleDialog } from "./_components/new-candle-dialog";
@@ -8,19 +8,28 @@ import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { useLanguage } from "./_contexts/language-context";
 
-const getCandles = async () => {
-  const res = await fetch("api/candle");
-  return res.json();
+const CANDLES_PER_PAGE = 20;
+
+const getCandles = async (page: number = 1) => {
+  const res = await fetch(`api/candle?page=${page}&limit=${CANDLES_PER_PAGE}`);
+  const data = await res.json();
+  return data;
 };
 
 export default function Home() {
-  const [candles, setCandles] = useState([]);
+  const [candles, setCandles] = useState<Record<string, string>>({});
   const [windowWidth, setWindowWidth] = useState(0);
   const [selectedCandle, setSelectedCandle] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const openDialogRef = useRef<(() => void) | null>(null);
   const { t, isLanguageLoaded } = useLanguage();
   const tourInitializedRef = useRef(false);
   const isInitialLoad = useRef(true);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Detect window width for responsive placeholder count
   useEffect(() => {
@@ -30,26 +39,99 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Load initial candles
   useEffect(() => {
     (async () => {
-      const candles = await getCandles();
-      setCandles(candles);
-      
-      // Check for hash in URL on initial load
-      if (isInitialLoad.current && window.location.hash) {
-        const candleName = window.location.hash.substring(1); // Remove the #
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((candles as any)[candleName]) {
-          setSelectedCandle(candleName);
+      setIsInitialLoading(true);
+      try {
+        const data = await getCandles(1);
+        setCandles(data.candles || {});
+        setHasMore(data.pagination?.hasMore ?? false);
+        setCurrentPage(1);
+        
+        // Check for hash in URL on initial load
+        if (isInitialLoad.current && window.location.hash) {
+          const candleName = window.location.hash.substring(1); // Remove the #
+          if (data.candles?.[candleName]) {
+            setSelectedCandle(candleName);
+          }
+          isInitialLoad.current = false;
         }
-        isInitialLoad.current = false;
+      } catch (error) {
+        console.error("Error loading candles:", error);
+      } finally {
+        setIsInitialLoading(false);
       }
     })();
   }, []);
 
+  // Load more candles function
+  const loadMoreCandles = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+    
+    setIsLoading(true);
+    try {
+      const nextPage = currentPage + 1;
+      const data = await getCandles(nextPage);
+      
+      if (data.candles) {
+        setCandles((prev) => ({ ...prev, ...data.candles }));
+        setHasMore(data.pagination?.hasMore ?? false);
+        setCurrentPage(nextPage);
+      }
+    } catch (error) {
+      console.error("Error loading more candles:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, hasMore, isLoading]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const currentRef = loadMoreRef.current;
+    if (!currentRef || isInitialLoading) return;
+
+    // Clean up previous observer if it exists
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMore && !isLoading && !isInitialLoading) {
+          loadMoreCandles();
+        }
+      },
+      {
+        rootMargin: "200px", // Start loading 200px before reaching the bottom
+      }
+    );
+
+    observer.observe(currentRef);
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [hasMore, isLoading, isInitialLoading, loadMoreCandles]);
+
   const onCandleCreated = async () => {
-    const candles = await getCandles();
-    setCandles(candles);
+    // Reset to first page and reload
+    setIsInitialLoading(true);
+    try {
+      const data = await getCandles(1);
+      setCandles(data.candles || {});
+      setHasMore(data.pagination?.hasMore ?? false);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Error reloading candles:", error);
+    } finally {
+      setIsInitialLoading(false);
+    }
   };
 
   const onChildRendered = () => {
@@ -110,9 +192,9 @@ export default function Home() {
     localStorage.setItem("visited", "true");
   }, [isLanguageLoaded, t]);
 
-  // Calculate how many placeholders to show
+  // Calculate how many placeholders to show (always show when below minimum)
   const candleCount = Object.keys(candles).length;
-  const minCandles = windowWidth < 640 ? 4 : 8; // Mobile: 4, Desktop: 8
+  const minCandles = windowWidth < 1024 ? 4 : windowWidth < 1280 ? 6 : 8; // <1024: 4, <1280: 6, >=1280: 8
   const placeholderCount = Math.max(0, minCandles - candleCount);
 
   const handlePlaceholderClick = () => {
@@ -177,7 +259,7 @@ export default function Home() {
           {/* Real candles */}
           {Object.keys(candles).map((candleKey) => (
             <CandleItem
-              candle={candles[candleKey as unknown as number]}
+              candle={candles[candleKey]}
               key={candleKey}
               name={candleKey}
               navigate
@@ -185,7 +267,7 @@ export default function Home() {
             />
           ))}
           
-          {/* Placeholders */}
+          {/* Placeholders (show when candle count is below minimum) */}
           {Array.from({ length: placeholderCount }).map((_, index) => (
             <CandlePlaceholder 
               key={`placeholder-${index}`} 
@@ -193,6 +275,18 @@ export default function Home() {
             />
           ))}
         </div>
+        
+        {/* Loading indicator and infinite scroll trigger */}
+        {!isInitialLoading && (
+          <div ref={loadMoreRef} className="w-full py-8 flex justify-center">
+            {isLoading && (
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
+                <span>{t("loading")}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

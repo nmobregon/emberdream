@@ -11,18 +11,21 @@
     "clear-redis:all": "tsx scripts/clear-redis.ts --flush-all"
   },
   "dependencies": {
+    "@upstash/ratelimit": "^2.0.0",
     "@upstash/redis": "^1.34.3",
     "driver.js": "^1.3.1",
     "next": "15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "redis": "^4.7.0"
+    "redis": "^4.7.0",
+    "validator": "^13.13.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/validator": "^13.11.7",
     "eslint": "^9",
     "eslint-config-next": "15.1.2",
     "postcss": "^8",

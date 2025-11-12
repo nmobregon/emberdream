@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Candle } from "./candle";
 import { countries } from "../_data/countries";
 import { useLanguage } from "../_contexts/language-context";
@@ -11,35 +11,65 @@ export function CandleItem(candleProp: {
   navigate: boolean;
   onCandleClick?: () => void;
 }) {
-  const { t } = useLanguage();
-  const [copied, setCopied] = useState(false);
+  const { t, language } = useLanguage();
   const candle = JSON.parse(candleProp.candle);
+  const [support, setSupport] = useState(candle.support || 0);
+  const [isSupporting, setIsSupporting] = useState(false);
+  const [hasSupported, setHasSupported] = useState(false);
   const [name, createdAt] = candleProp.name.split("-");
+
+  // Check localStorage on mount to see if user has already supported this candle
+  useEffect(() => {
+    const supportedData = JSON.parse(localStorage.getItem("candelei-supported-candles") || "{}");
+    const now = Date.now();
+    const twelveHours = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+    
+    // Clean up expired entries
+    const cleanedData: Record<string, number> = {};
+    Object.keys(supportedData).forEach((candleName) => {
+      const timestamp = supportedData[candleName];
+      if (now - timestamp < twelveHours) {
+        cleanedData[candleName] = timestamp;
+      }
+    });
+    
+    // Save cleaned data back to localStorage
+    localStorage.setItem("candelei-supported-candles", JSON.stringify(cleanedData));
+    
+    // Check if current candle is in the list
+    setHasSupported(candleProp.name in cleanedData);
+  }, [candleProp.name]);
   const height =
     ((Date.now() - +createdAt) * 100) /
     (+(process.env.CANDLE_DURATION ?? 720) * 60 * 1000);
   const country = countries.find((c) => c.code === candle.country)?.name;
+  
+  // Format date based on language context
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const locale = language === "es" ? "es-ES" : "en-US";
+    return date.toLocaleString(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+  
   const candleObj = {
     ...candle,
     height,
     country,
     name,
-    date: new Date(+createdAt).toLocaleString(),
+    date: formatDate(+createdAt),
     color: candle.color || "#ff9224", // Default to classic orange if no color stored
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onCopyToClipboard = (event: any) => {
-    event.stopPropagation();
-    const url = `${window.location.origin}${window.location.pathname}#${candleProp.name}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onShare = async (event: any) => {
     event.stopPropagation();
+    event.preventDefault();
     if (navigator.share) {
       try {
         const url = `${window.location.origin}${window.location.pathname}#${candleProp.name}`;
@@ -56,6 +86,39 @@ export function CandleItem(candleProp: {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onSupport = async (event: any) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (isSupporting || hasSupported) return;
+    
+    setIsSupporting(true);
+    try {
+      const response = await fetch(`/api/candle/${candleProp.name}`, {
+        method: "PATCH",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSupport(data.support);
+        
+        // Save to localStorage with timestamp
+        const supportedData = JSON.parse(localStorage.getItem("candelei-supported-candles") || "{}");
+        supportedData[candleProp.name] = Date.now();
+        localStorage.setItem("candelei-supported-candles", JSON.stringify(supportedData));
+        setHasSupported(true);
+      }
+    } catch (error) {
+      console.error("Error supporting candle:", error);
+    } finally {
+      setIsSupporting(false);
+    }
+  };
+
+  const formatSupportCount = (count: number) => {
+    return count > 99 ? "99+" : count.toString();
+  };
+
   return (
     <>
       {candleObj && (
@@ -70,6 +133,7 @@ export function CandleItem(candleProp: {
             overflow-hidden
             group
             active:scale-95
+            relative
           `          }
           onClick={() => {
             if (candleProp.navigate && candleProp.onCandleClick) {
@@ -89,27 +153,41 @@ export function CandleItem(candleProp: {
               {t("candle.by")} <span className="text-amber-300 font-medium">{candleObj.name}</span> 
               <span className="text-gray-400"> ({candleObj.country})</span>
             </p>
-            <p className="text-xs text-gray-400 mb-2 truncate max-w-full">
+            <p className="text-xs text-gray-400 mb-3 truncate max-w-full">
               {t("candle.on")} {candleObj.date}
             </p>
-            <div className="flex justify-center w-full gap-3 pt-2 border-t border-gray-600 border-opacity-30">
+
+            {/* Action buttons row */}
+            <div className="flex justify-between w-full pt-2 border-t border-gray-600 border-opacity-30">
+              {/* Support button */}
               <button
-                className="
-                  p-2 rounded-full 
-                  hover:bg-amber-500 hover:bg-opacity-20 
+                className={`
+                  flex items-center gap-1.5
+                  px-2.5 py-1.5
+                  rounded-full
                   transition-all duration-200
-                  hover:scale-110
-                  focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50
-                "
-                onClick={onCopyToClipboard}
-                title={t("candle.copy")}
+                  focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50
+                  ${hasSupported 
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : 'hover:bg-amber-500 hover:bg-opacity-20 hover:scale-110 opacity-90 hover:opacity-100'
+                  }
+                  ${isSupporting ? 'opacity-50' : ''}
+                `}
+                onClick={onSupport}
+                disabled={isSupporting || hasSupported}
+                title={hasSupported ? `${t("candle.support.already")} (${support} ${t("candle.support.count")})` : `${t("candle.support")} (${support} ${t("candle.support.count")})`}
               >
-                <span className="text-xl">{copied ? "✅" : "🔗"}</span>
+                <span className="text-lg">{hasSupported ? '✓' : '🔥'}</span>
+                <span className="text-xs font-semibold text-white">
+                  {formatSupportCount(support)}
+                </span>
               </button>
+
+              {/* Share button */}
               <button
                 className="
-                  p-2 rounded-full 
-                  hover:bg-amber-500 hover:bg-opacity-20 
+                  p-2 rounded-full
+                  hover:bg-amber-500 hover:bg-opacity-20
                   transition-all duration-200
                   hover:scale-110
                   focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50
