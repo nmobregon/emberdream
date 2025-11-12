@@ -28,7 +28,7 @@ export function LayoutContent({
             <LanguageSelector />
             <Link
               target="_blank"
-              href="https://cafecito.app/emberdream"
+              href="https://cafecito.app/candelei"
               className="text-xs md:text-base rounded-full px-3 py-1.5 md:px-5 md:py-2.5 font-medium
                 bg-gradient-to-r from-amber-600 to-orange-600 
                 text-white shadow-lg
@@ -38,7 +38,8 @@ export function LayoutContent({
                 glow-warm-hover whitespace-nowrap"
               id="donate_btn"
             >
-              ☕ {t("header.donate")}
+              <span className="md:hidden">☕ {t("header.donate.mobile")}</span>
+              <span className="hidden md:inline">☕ {t("header.donate")}</span>
             </Link>
           </div>
         </div>

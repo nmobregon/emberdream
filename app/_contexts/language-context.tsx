@@ -8,6 +8,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  isLanguageLoaded: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -15,8 +16,9 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const translations = {
   en: {
     // Header
-    "header.title": "Ember Dream",
+    "header.title": "Candelei",
     "header.donate": "Buy me a coffee",
+    "header.donate.mobile": "Coffee",
     
     // Home page
     "home.hero.title": "Light your candle, share your wishes",
@@ -53,18 +55,22 @@ export const translations = {
     
     // Tour
     "tour.welcome.title": "Welcome",
-    "tour.welcome.description": "Ember Dream lets you express your wishes and intentions with a 12-hour-lasting flame",
+    "tour.welcome.description": "Candelei lets you express your wishes and intentions with a 12-hour-lasting flame",
     "tour.spark.title": "Spark the fire!",
     "tour.spark.description": "Click here to light your candle and input your country, name and wish",
     "tour.donate.title": "Donate",
     "tour.donate.description": "This site is non-profit but still requires effort and time. If you consider it's worth a dollar, the team will gratefully accept your donation.",
     "tour.farewell.title": "May all your wishes come true",
-    "tour.farewell.description": "The Ember Dream team wishes you the best.",
+    "tour.farewell.description": "The Candelei team wishes you the best.",
+    "tour.button.next": "Next",
+    "tour.button.previous": "Previous",
+    "tour.button.done": "Done",
   },
   es: {
     // Header
-    "header.title": "Ember Dream",
+    "header.title": "Candelei",
     "header.donate": "Invítame un cafecito",
+    "header.donate.mobile": "Café",
     
     // Home page
     "home.hero.title": "Enciende tu vela, comparte tus deseos",
@@ -101,30 +107,43 @@ export const translations = {
     
     // Tour
     "tour.welcome.title": "Bienvenid@",
-    "tour.welcome.description": "Ember Dream te permite expresar tus deseos e intenciones prendiendo una llama que dura 12 horas",
+    "tour.welcome.description": "Candelei te permite expresar tus deseos e intenciones prendiendo una llama que dura 12 horas",
     "tour.spark.title": "¡Enciende el fuego!",
     "tour.spark.description": "Haciendo clic aquí puedes encender tu vela ingresando tu país, nombre y deseo o intención",
     "tour.donate.title": "Donar",
     "tour.donate.description": "Este sitio no tiene fines de lucro, pero sí implica esfuerzo y tiempo. Si consideras que vale la pena, el equipo agradece tu donación.",
     "tour.farewell.title": "Que todos tus sueños se cumplan",
-    "tour.farewell.description": "El equipo de Ember Dream te desea lo mejor!",
+    "tour.farewell.description": "El equipo de Candelei te desea lo mejor!",
+    "tour.button.next": "Siguiente",
+    "tour.button.previous": "Anterior",
+    "tour.button.done": "Listo",
   },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
+  const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
 
-  // Load language from localStorage on mount
+  // Load language from localStorage or auto-detect from browser on mount
   useEffect(() => {
-    const savedLang = localStorage.getItem("ember-dream-language") as Language;
+    const savedLang = localStorage.getItem("candelei-language") as Language;
     if (savedLang && (savedLang === "en" || savedLang === "es")) {
       setLanguageState(savedLang);
+    } else {
+      // Auto-detect language from browser
+      const browserLang = navigator.language.toLowerCase();
+      if (browserLang.startsWith("es")) {
+        setLanguageState("es");
+        localStorage.setItem("candelei-language", "es");
+      }
+      // Default is already "en"
     }
+    setIsLanguageLoaded(true);
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("ember-dream-language", lang);
+    localStorage.setItem("candelei-language", lang);
   };
 
   const t = (key: string): string => {
@@ -132,7 +151,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isLanguageLoaded }}>
       {children}
     </LanguageContext.Provider>
   );

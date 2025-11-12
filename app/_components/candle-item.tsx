@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Candle } from "./candle";
 import { countries } from "../_data/countries";
 import { useLanguage } from "../_contexts/language-context";
@@ -8,8 +9,10 @@ export function CandleItem(candleProp: {
   name: string;
   candle: string;
   navigate: boolean;
+  onCandleClick?: () => void;
 }) {
   const { t } = useLanguage();
+  const [copied, setCopied] = useState(false);
   const candle = JSON.parse(candleProp.candle);
   const [name, createdAt] = candleProp.name.split("-");
   const height =
@@ -28,9 +31,10 @@ export function CandleItem(candleProp: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onCopyToClipboard = (event: any) => {
     event.stopPropagation();
-    navigator.clipboard.writeText(
-      window.location.href + "candle/" + candleProp.name
-    );
+    const url = `${window.location.origin}${window.location.pathname}#${candleProp.name}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,10 +42,11 @@ export function CandleItem(candleProp: {
     event.stopPropagation();
     if (navigator.share) {
       try {
+        const url = `${window.location.origin}${window.location.pathname}#${candleProp.name}`;
         await navigator.share({
-          title: "Ember Dreams - Candle by " + candleObj.name,
+          title: "Candelei - Candle by " + candleObj.name,
           text: candleObj.wish,
-          url: window.location.href + "candle/" + candleProp.name,
+          url: url,
         });
       } catch (error) {
         console.error("Error sharing the URL: ", error);
@@ -64,17 +69,19 @@ export function CandleItem(candleProp: {
             glow-warm-hover
             overflow-hidden
             group
+            active:scale-95
           `          }
-          onClick={() =>
-            candleProp.navigate &&
-            window.open(window.location.href + "candle/" + candleProp.name)
-          }
+          onClick={() => {
+            if (candleProp.navigate && candleProp.onCandleClick) {
+              candleProp.onCandleClick();
+            }
+          }}
         >
           <Candle height={100 - candleObj.height} color={candleObj.color} />
 
           <div className="flex flex-col items-center w-full glass px-4 py-3 mt-2 rounded-b-xl transition-all duration-300 group-hover:bg-opacity-80">
             {candleProp.navigate && (
-              <p className="text-base md:text-lg font-medium text-center mb-2 line-clamp-2 leading-snug h-[52px] overflow-hidden">
+              <p className="text-base md:text-lg font-medium text-center mb-2 line-clamp-1 leading-snug overflow-hidden">
                 {candleObj.wish}
               </p>
             )}
@@ -97,7 +104,7 @@ export function CandleItem(candleProp: {
                 onClick={onCopyToClipboard}
                 title={t("candle.copy")}
               >
-                <span className="text-xl">🔗</span>
+                <span className="text-xl">{copied ? "✅" : "🔗"}</span>
               </button>
               <button
                 className="

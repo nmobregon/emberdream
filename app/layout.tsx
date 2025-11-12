@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ember Dream",
+  title: "Candelei",
   description: "A place for your wishes to burn",
 };
 

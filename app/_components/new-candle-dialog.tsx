@@ -1,10 +1,11 @@
-import { FormEvent, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { FormEvent, useLayoutEffect, useRef, useState, useCallback, useEffect } from "react";
 
 import Form from "next/form";
 import Image from "next/image";
 import { useLanguage } from "../_contexts/language-context";
 import { CountrySelector } from "./country-selector";
 import { ColorSelector } from "./color-selector";
+import { countries } from "../_data/countries";
 
 export const NewCandleDialog = ({
   candleCreated,
@@ -21,6 +22,7 @@ export const NewCandleDialog = ({
   const [dialogOpened, setDialogOpened] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedColor, setSelectedColor] = useState("#ff9224"); // Default to classic orange
+  const [countryAutoDetected, setCountryAutoDetected] = useState(false);
 
   const openDialog = useCallback(() => {
     setDialogOpened(true);
@@ -30,6 +32,7 @@ export const NewCandleDialog = ({
     setDialogOpened(false);
     setSelectedCountry("");
     setSelectedColor("#ff9224"); // Reset to default
+    setCountryAutoDetected(false); // Allow auto-detection on next open
   }, []);
 
   useLayoutEffect(() => {
@@ -38,6 +41,28 @@ export const NewCandleDialog = ({
       onMount(openDialog);
     }
   }, [childRendered, onMount, openDialog]);
+
+  // Auto-detect country from browser locale
+  useEffect(() => {
+    if (!countryAutoDetected) {
+      try {
+        // Try to get country code from locale (e.g., "en-US" -> "US")
+        const locale = navigator.language;
+        const countryCode = locale.split("-")[1]?.toUpperCase();
+        
+        if (countryCode) {
+          // Check if the country code exists in our countries list
+          const countryExists = countries.some(c => c.code === countryCode);
+          if (countryExists) {
+            setSelectedCountry(countryCode);
+            setCountryAutoDetected(true);
+          }
+        }
+      } catch (e) {
+        console.error("Could not auto-detect country:", e);
+      }
+    }
+  }, [countryAutoDetected]);
 
   useLayoutEffect(() => {
     if (dialogOpened) {
@@ -74,6 +99,7 @@ export const NewCandleDialog = ({
     setDialogOpened(false);
     setSelectedCountry("");
     setSelectedColor("#ff9224"); // Reset to default
+    setCountryAutoDetected(false); // Allow auto-detection on next open
   };
 
   return (
@@ -96,8 +122,8 @@ export const NewCandleDialog = ({
         onClick={openDialog}
       >
         <Image
-          src="/ember-dream-icon.png"
-          alt="Ember Dream logo"
+          src="/candelei-icon.png"
+          alt="Candelei logo"
           width={50}
           height={50}
           className="drop-shadow-lg"
@@ -105,7 +131,7 @@ export const NewCandleDialog = ({
       </button>
       <dialog
         ref={dialog}
-        className="glass overflow-hidden backdrop-blur-xl rounded-3xl shadow-2xl p-0 w-full max-w-lg border border-amber-500 border-opacity-20 animate-dialog-appear"
+        className="glass backdrop-blur-xl rounded-3xl shadow-2xl p-0 w-full max-w-lg border border-amber-500 border-opacity-20 animate-dialog-appear"
       >
         <div className="relative flex justify-between items-center p-6 border-b border-amber-500 border-opacity-20 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent">
           <div className="flex items-center gap-3">
